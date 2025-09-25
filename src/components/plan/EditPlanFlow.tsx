@@ -215,108 +215,129 @@ function AssumptionResultStep({
     router.push(`/dashboard`);
   };
 
+  console.log("result", result);
+
   return (
     <div className="max-w-5xl mx-auto fixed inset-0 flex flex-col z-10 bg-slate-950 text-white">
-      <div className="relative flex items-center h-10 mb-4">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push(`/dashboard`)}
-          >
-            <ArrowLeftIcon className="w-6 h-6 text-white" />
-          </Button>
-        </div>
-      </div>
-      <h2 className="text-2xl font-bold mb-2 mx-4 text-cyan-500">{user?.firstName}, </h2>
-      {
-        // Case 1: Can purchase, but later than planned
-        result.earliestPurchaseYear >= (planData.confirmedPurchaseYear ?? Infinity) && (result.earliestPurchaseYear - new Date().getFullYear() <= 3 && result.earliestPurchaseYear - planData.confirmedPurchaseYear! >= 1) ? (
-          <div className="flex flex-col mx-4">
-            <div className="text-lg mb-4">
-              Kế hoạch <br />
-              <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div>
-              của bạn đã sẵn sàng.
-            </div>
-            <div className="flex items-center justify-center text-center">
-              <Image src="/onboarding/result 1.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
-            </div>
-            <div className="text-center text-slate-400">
-              Bạn có thể mua nhà sớm nhất vào năm {result.earliestPurchaseYear}
-            </div>
-            <div className="mb-4 items-center justify-center text-center">Bạn muốn điều chỉnh mong muốn không, hay giữ nguyên và lùi thời gian mua nhà?<br />👇👇👇</div>
-            <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
-              <div className="mt-auto pt-4">
-                <Button
-                  onClick={() => setAssumptionUiStep('form')}
-                  variant="outline"
-                  className="w-full bg-slate-700 py-4 font-semibold border-slate-600 text-lg hover:bg-slate-600 text-slate-200 cursor-pointer"
-                >
-                  Điều chỉnh mong muốn
-                </Button>
-              </div>
-              <div className="mt-auto pt-4">
-                <Button onClick={() => handleFinalChoice(result.earliestPurchaseYear)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
-                  Mua nhà năm {result.earliestPurchaseYear}
-                </Button>
-              </div>
-            </div>
-          </div>
-          // Case 2: Can purchase earlier or on time
-        ) : (result.earliestPurchaseYear > 0 && result.earliestPurchaseYear - new Date().getFullYear() <= 3 && result.earliestPurchaseYear - planData.confirmedPurchaseYear! >= 1) ? (
-          <div className="flex flex-col mx-4">
-            <div className="text-lg mb-4">
-              Kế hoạch <br />
-              <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div>
-              của bạn đã sẵn sàng.
-            </div>
-            <div className="flex items-center justify-center text-center">
-              <Image src="/onboarding/result 2.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
-            </div>
-            <div className="text-center text-slate-400">
-              Bạn có thể mua nhà vào năm {planData.confirmedPurchaseYear} như mong muốn, thậm chí có thể mua sớm hơn vào năm {result.earliestPurchaseYear}!
-            </div>
-            <div className="mb-4 items-center justify-center text-center">Hãy chọn thời gian bạn muốn mua nhà!<br />👇👇👇</div>
-            <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
-              <div className="mt-auto pt-4">
-                <Button
-                  onClick={() => handleFinalChoice(result.earliestPurchaseYear)}
-                  variant="outline"
-                  className="w-full bg-slate-700 py-4 font-semibold border-slate-600 text-lg hover:bg-slate-600 text-slate-200 cursor-pointer"
-                >
-                  Mua nhà năm {result.earliestPurchaseYear}
-                </Button>
-              </div>
-              <div className="mt-auto pt-4">
-                <Button onClick={() => handleFinalChoice(planData.confirmedPurchaseYear!)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
-                  Mua nhà năm {planData.confirmedPurchaseYear}
-                </Button>
-              </div>
-            </div>
-
-          </div>
-          // Case 3: Cannot purchase
-        ) : (
-          <div className="flex flex-col mx-4">
-            <div className="text-lg mb-4">
-              Bạn sẽ cần điều chỉnh nhiều để<br />
-              <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div>
-            </div>
-            <div className="flex items-center justify-center text-center">
-              <Image src="/onboarding/result 3.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
-            </div>
-            <div className="text-center text-slate-400">
-              Bạn vẫn chưa thể mua được nhà, sẽ cần rất nhiều thay đổi về mong muốn và khả năng tích luỹ đấy!
-            </div>
-            <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
-              <Button onClick={() => setAssumptionUiStep('form')} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
-                Điều chỉnh mong muốn
+          <div className="relative flex items-center h-10 mb-4">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setAssumptionUiStep('form')}
+              >
+                <ArrowLeftIcon className="w-6 h-6 text-white" />
               </Button>
             </div>
           </div>
-        )}
-    </div>
-  );
+          <h2 className="text-2xl font-bold mb-2 mx-4 text-cyan-500">{user?.firstName}, </h2>
+              {
+                // Case 1: Can purchase, but later than planned
+                result.earliestPurchaseYear > (planData.confirmedPurchaseYear ?? Infinity) && (result.earliestPurchaseYear - new Date().getFullYear() <= 3 && result.earliestPurchaseYear - planData.confirmedPurchaseYear! >= 1) ? (
+                <div className="flex flex-col mx-4">
+                  <div className="text-lg mb-4">
+                    Kế hoạch <br/> 
+                    <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div> 
+                    của bạn đã sẵn sàng.
+                  </div>
+                  <div className="flex items-center justify-center text-center">
+                    <Image src="/onboarding/result 1.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
+                  </div>
+                  <div className="text-center text-slate-400">
+                    Bạn có thể mua nhà sớm nhất vào năm {result.earliestPurchaseYear}                  
+                  </div>
+                  <div className="mb-4 items-center justify-center text-center">Bạn muốn điều chỉnh mong muốn không, hay giữ nguyên và lùi thời gian mua nhà?<br/>👇👇👇</div>
+                  <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
+                    <div className="mt-auto pt-4">
+                      <Button 
+                        onClick={() => router.push(`/plan/${planData.id}/edit`)}
+                        variant="outline" 
+                        className="w-full bg-slate-700 py-4 font-semibold border-slate-600 text-lg hover:bg-slate-600 text-slate-200 cursor-pointer" 
+                      >
+                        Điều chỉnh mong muốn
+                      </Button>
+                    </div>
+                    <div className="mt-auto pt-4">
+                        <Button onClick={() => handleFinalChoice(result.earliestPurchaseYear)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
+                          Mua nhà năm {result.earliestPurchaseYear}
+                        </Button>
+                    </div>
+                  </div>
+                </div>
+              // Case 2: Can purchase earlier or on time
+              ) : (result.earliestPurchaseYear > 0 && result.earliestPurchaseYear - new Date().getFullYear() <= 3 && result.earliestPurchaseYear - planData.confirmedPurchaseYear! >= 1) ? (
+              <div className="flex flex-col mx-4">
+                <div className="text-lg mb-4">
+                  Kế hoạch <br/> 
+                  <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div>
+                  của bạn đã sẵn sàng.
+                </div>
+                <div className="flex items-center justify-center text-center">
+                  <Image src="/onboarding/result 2.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
+                </div>
+                <div className="text-center text-slate-400">
+                  Bạn có thể mua nhà vào năm {planData.confirmedPurchaseYear} như mong muốn, thậm chí có thể mua sớm hơn vào năm {result.earliestPurchaseYear}!
+                </div>
+                <div className="mb-4 items-center justify-center text-center">Hãy chọn thời gian bạn muốn mua nhà!<br/>👇👇👇</div>
+                <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
+                  <div className="mt-auto pt-4">
+                    <Button 
+                      onClick={() => handleFinalChoice(result.earliestPurchaseYear)}
+                      variant="outline" 
+                      className="w-full bg-slate-700 py-4 font-semibold border-slate-600 text-lg hover:bg-slate-600 text-slate-200 cursor-pointer" 
+                    >
+                      Mua nhà năm {result.earliestPurchaseYear}
+                    </Button>
+                  </div>
+                  <div className="mt-auto pt-4">
+                    <Button onClick={() => handleFinalChoice(planData.confirmedPurchaseYear!)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
+                      Mua nhà năm {planData.confirmedPurchaseYear}
+                    </Button>
+                  </div>
+                </div>
+    
+              </div>
+              // Case 3: Cannot purchase
+              ) : (result.earliestPurchaseYear === planData.confirmedPurchaseYear) ? (
+              <div className="flex flex-col mx-4">
+                <div className="text-lg mb-4">
+                  Kế hoạch <br/> 
+                  <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div>
+                  của bạn đã sẵn sàng.
+                </div>
+                <div className="flex items-center justify-center text-center">
+                  <Image src="/onboarding/result 3.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
+                </div>
+                <div className="text-center text-slate-400">
+                  Bạn hoàn toàn có thể mua nhà vào năm {planData.confirmedPurchaseYear} như mong muốn của mình
+                </div>
+                <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
+                  <Button onClick={() => handleFinalChoice(planData.confirmedPurchaseYear!)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
+                    Lập kế hoạch mua nha nhà năm {planData.confirmedPurchaseYear}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col mx-4">
+                <div className="text-lg mb-4">
+                  Bạn sẽ cần điều chỉnh nhiều để<br/> 
+                  <div className="text-cyan-500 font-bold">chinh phục căn nhà đầu tiên</div> 
+                </div>
+                <div className="flex items-center justify-center text-center">
+                  <Image src="/onboarding/result 4.png" alt="Giả định & Chiến lược" width={300} height={300} className="mb-6" />
+                </div>
+                <div className="text-center text-slate-400">
+                  Bạn vẫn chưa thể mua được nhà, sẽ cần rất nhiều thay đổi về mong muốn và khả năng tích luỹ đấy!
+                </div>
+                <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto p-4 bg-slate-950 border-t border-slate-800 z-10">
+                  <Button onClick={() => router.push(`/plan/${planData.id}/edit`)} className="w-full hover:bg-gray-300 py-4 text-lg font-semibold rounded-sm shadow-lg cursor-pointer">
+                    Điều chỉnh mong muốn
+                  </Button>
+                </div>
+              </div>
+            )}
+        </div>
+  )
 }
 
 export default function EditPlanFlow({ initialPlan }: EditPlanFlowProps) {

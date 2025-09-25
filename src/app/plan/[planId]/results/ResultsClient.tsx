@@ -43,8 +43,8 @@ export default function ResultsClient({
                 <Image
                   src="/onboarding/result1.png"
                   alt="Decorative"
-                  width={136}
-                  height={169}
+                  width={200}
+                  height={300}
                   className="mx-auto"
                 />
               </div>
@@ -69,8 +69,8 @@ export default function ResultsClient({
                     <Image
                     src="/onboarding/result2.png"
                     alt="Decorative"
-                      width={136}
-                      height={169}
+                      width={200}
+                      height={300}
                       className="mx-auto"
                     />
                   </div>
@@ -80,8 +80,8 @@ export default function ResultsClient({
                 <Image
                   src="/onboarding/result3.png"
                   alt="Decorative"
-                  width={136}
-                  height={169}
+                  width={200}
+                  height={300}
                   className="mx-auto"
                 />
               </div>

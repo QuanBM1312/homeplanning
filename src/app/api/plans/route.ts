@@ -1,69 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { z } from "zod";
+import logger from "@/lib/logger";
+import { startOnboardingPlan } from "@/lib/services/onboardingService";
 import { db } from "@/lib/db";
-import { calculateAffordability } from "@/lib/calculations/affordability";
+
+// Schema validation cho dữ liệu từ QuickCheck
+const quickCheckCreateSchema = z.object({
+  yearsToPurchase: z.number().int().min(new Date().getFullYear(), "Năm mục tiêu không hợp lệ"),
+  targetHousePriceN0: z.number().positive("Giá nhà mục tiêu phải là số dương"),
+  monthlyLivingExpenses: z.number().nonnegative("Chi phí sinh hoạt không được âm"),
+  hasCoApplicant: z.boolean().optional(),
+  initialSavings: z.number().nonnegative("Tiết kiệm ban đầu không được âm").optional(),
+  userMonthlyIncome: z.number().nonnegative("Thu nhập hàng tháng không được âm").optional(),
+  targetHouseType: z.string().optional(),
+  targetLocation: z.string().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    const clerkUser = await currentUser();
+    if (!userId || !clerkUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
+    const data = quickCheckCreateSchema.parse(body);
 
-    // Create a new plan in the database
-    const plan = await db.plan.create({
-      data: {
-        userId,
-        planName: body.planName || "Kế hoạch mua nhà",
-        yearsToPurchase: Number(body.yearsToPurchase),
-        targetHousePriceN0: Number(body.targetHousePriceN0),
-        targetHouseType: body.targetHouseType,
-        targetLocation: body.targetLocation,
-        // maritalStatus: body.maritalStatus,
-        // hasDependents: Boolean(body.hasDependents),
-        // numberOfDependents: Number(body.numberOfDependents || 0),
-        // plansMarriageBeforeTarget: Boolean(body.plansMarriageBeforeTarget || false),
-        // targetMarriageYear: body.targetMarriageYear ? Number(body.targetMarriageYear) : null,
-        // plansChildBeforeTarget: Boolean(body.plansChildBeforeTarget || false),
-        // targetChildYear: body.targetChildYear ? Number(body.targetChildYear) : null,
-        // initialSavingsGoal: Number(body.initialSavingsGoal),
-        // incomeLastYear: Number(body.incomeLastYear),
-        monthlyLivingExpenses: Number(body.monthlyLivingExpenses),
-        monthlyNonHousingDebt: Number(body.monthlyNonHousingDebt),
-        currentAnnualInsurancePremium: Number(body.currentAnnualInsurancePremium),
-        // spouseMonthlyIncome: Number(body.spouseMonthlyIncome || 0),
-        pctHouseGrowth: Number(body.pctHouseGrowth),
-        pctSalaryGrowth: Number(body.pctSalaryGrowth),
-        pctExpenseGrowth: Number(body.pctExpenseGrowth),
-        pctInvestmentReturn: Number(body.pctInvestmentReturn),
-        // factorMarriage: Number(body.factorMarriage),
-        // factorChild: Number(body.factorChild),
-        loanInterestRate: Number(body.loanInterestRate),
-        // loanTermMonths: Number(body.loanTermMonths),
-      },
-    });
+    const {
+      yearsToPurchase: absoluteYear,
+      targetHousePriceN0: priceInBillion,
+      ...restData
+    } = data;
 
-    // Calculate affordability
-    const affordabilityResult = calculateAffordability(plan);
+    // Chuẩn hóa dữ liệu trước khi gọi service
+    const yearsToPurchase = absoluteYear - new Date().getFullYear();
+    if (yearsToPurchase < 0) {
+        return NextResponse.json({ error: "Năm mục tiêu phải là năm hiện tại hoặc trong tương lai" }, { status: 400 });
+    }
+    const targetHousePriceN0 = priceInBillion * 1000;
 
-    // Update the plan with the affordability outcome and first viable year
-    await db.plan.update({
-      where: {
-        id: plan.id,
-      },
-      data: {
-        affordabilityOutcome: affordabilityResult.affordabilityOutcome,
-        firstViableYear: affordabilityResult.firstViableYear,
-      },
-    });
+    const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
 
-    return NextResponse.json(plan);
+    const normalizedData = {
+        ...restData,
+        yearsToPurchase,
+        targetHousePriceN0,
+    };
+
+    // Gọi service để xử lý logic
+    const newPlan = await startOnboardingPlan(userId, userEmail, normalizedData);
+
+    return NextResponse.json({ planId: newPlan.id }, { status: 201 });
+
   } catch (error) {
-    console.error("[PLANS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    if (error instanceof z.ZodError) {
+      logger.warn("Invalid data for plan creation via /api/plans", { errors: error.format() });
+      return NextResponse.json({ errors: error.format() }, { status: 400 });
+    }
+    logger.error("Failed to create plan from /api/plans", { error: String(error) });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
