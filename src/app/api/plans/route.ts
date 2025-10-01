@@ -4,19 +4,41 @@ import { z } from "zod";
 import logger from "@/lib/logger";
 import { startOnboardingPlan } from "@/lib/services/onboardingService";
 import { db } from "@/lib/db";
+import { planSchema } from "@/lib/validators/plan";
 
-// Schema validation cho dữ liệu từ QuickCheck
-const quickCheckCreateSchema = z.object({
-  yearsToPurchase: z.number().int().min(new Date().getFullYear(), "Năm mục tiêu không hợp lệ"),
-  targetHousePriceN0: z.number().positive("Giá nhà mục tiêu phải là số dương"),
-  monthlyLivingExpenses: z.number().nonnegative("Chi phí sinh hoạt không được âm"),
-  hasCoApplicant: z.boolean().optional(),
-  initialSavings: z.number().nonnegative("Tiết kiệm ban đầu không được âm").optional(),
-  userMonthlyIncome: z.number().nonnegative("Thu nhập hàng tháng không được âm").optional(),
-  targetHouseType: z.string().optional(),
-  targetLocation: z.string().optional(),
-});
-
+/**
+ * @swagger
+ * /plans:
+ *   post:
+ *     summary: Create a new comprehensive plan
+ *     description: |
+ *       Creates a new financial plan from scratch. 
+ *       This endpoint can accept a full payload with all details, including nested sections like family support. 
+ *       If the user already has a plan, it will be replaced.
+ *     tags: [Plans]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Plan'
+ *     responses:
+ *       '201':
+ *         description: New plan created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 planId:
+ *                   type: string
+ *                   description: The ID of the newly created plan.
+ *       '400': { description: "Invalid request body." }
+ *       '401': { description: "Unauthorized." }
+ *       '500': { description: "Internal Server Error." }
+ */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -26,7 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const data = quickCheckCreateSchema.parse(body);
+    // Use the new, comprehensive schema for creation
+    const data = planSchema.parse(body);
 
     const {
       yearsToPurchase: absoluteYear,
@@ -49,7 +72,7 @@ export async function POST(req: NextRequest) {
         targetHousePriceN0,
     };
 
-    // Gọi service để xử lý logic
+    // Gọi service để xử lý logic - service này sẽ cần được nâng cấp
     const newPlan = await startOnboardingPlan(userId, userEmail, normalizedData);
 
     return NextResponse.json({ planId: newPlan.id }, { status: 201 });
@@ -64,6 +87,27 @@ export async function POST(req: NextRequest) {
   }
 }
 
+/**
+ * @swagger
+ * /plans:
+ *   get:
+ *     summary: Get all plans for the current user
+ *     description: Retrieves a list of all financial plans associated with the currently authenticated user.
+ *     tags: [Plans]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: A list of plans.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Plan'
+ *       '401': { description: "Unauthorized." }
+ *       '500': { description: "Internal Server Error." }
+ */
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();

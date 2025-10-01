@@ -12,7 +12,7 @@ import { useUser } from "@clerk/nextjs";
 import LoadingOverlay from "../ui/loading-overlay";
 
 type OnboardingSection = 'quickCheck' | 'signupPrompt' | 'familySupport' | 'spending' | 'assumptions';
-type SectionName = "familySupport" | "spending" | "assumptions";
+type SectionName = "familysupport" | "spending" | "assumptions";
 
 interface OnboardingFlowProps {
   planId: string;
@@ -54,7 +54,7 @@ export default function OnboardingFlow({ planId }: OnboardingFlowProps) {
     setIsLoading(true);
     setError(null);
     try {
-      await updatePlanSection(planId, 'familySupport', data);
+      await updatePlanSection(planId, 'familysupport', data);
       setPlanState(prev => ({ ...prev, ...data }));
       setCurrentSection('spending');
     } catch (err: any) {

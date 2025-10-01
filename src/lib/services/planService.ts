@@ -20,6 +20,7 @@ export type UpdateFamilySupportData = z.infer<typeof updateFamilySupportSchema>;
 export async function updateFamilySupport(planId: string, userId: string, data: UpdateFamilySupportData): Promise<PlanFamilySupport> {
   const plan = await db.plan.findUnique({ where: { id: planId, userId } });
   if (!plan) throw new Error("Plan not found or permission denied.");
+  
   return await db.planFamilySupport.upsert({
     where: { planId },
     update: data,
@@ -57,11 +58,26 @@ export const updateAssumptionsSchema = z.object({
 export type UpdateAssumptionsData = z.infer<typeof updateAssumptionsSchema>;
 
 export async function updateAssumptions(planId: string, userId: string, data: UpdateAssumptionsData): Promise<Plan> {
-    const plan = await db.plan.findUnique({ where: { id: planId, userId } });
-    if (!plan) throw new Error("Plan not found or permission denied.");
-    return await db.plan.update({
-        where: { id: planId },
-        data,
+    // Wrap operations in a transaction
+    return await db.$transaction(async (tx) => {
+        // 1. Verify plan ownership
+        const plan = await tx.plan.findUnique({ where: { id: planId, userId } });
+        if (!plan) throw new Error("Plan not found or permission denied.");
+
+        // 2. Update the assumptions on the plan
+        const updatedPlan = await tx.plan.update({
+            where: { id: planId },
+            data,
+        });
+
+        // 3. Delete the onboarding progress as this is the final step
+        await tx.onboardingProgress.deleteMany({
+            where: { planId },
+        });
+
+        logger.info(`Deleted onboarding progress for plan after assumptions update`, { planId });
+
+        return updatedPlan;
     });
 }
 

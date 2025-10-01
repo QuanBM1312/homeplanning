@@ -11,7 +11,7 @@ import {
 
 // Schema để validate phần thân của request
 const bodySchema = z.object({
-    section: z.enum(["familySupport", "spending", "assumptions"]), // Thêm các section khác vào đây
+    section: z.enum(["familysupport", "spending", "assumptions"]), // Thêm các section khác vào đây
     data: z.any(),
 });
 
@@ -63,7 +63,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { planId: st
         let result;
 
         switch (body.section) {
-            case "familySupport": {
+            case "familysupport": {
                 const validatedData = updateFamilySupportSchema.parse(body.data);
                 result = await updateFamilySupport(planId, userId, validatedData);
                 await invalidateReportCache(planId); // Dữ liệu này ảnh hưởng đến tính toán
